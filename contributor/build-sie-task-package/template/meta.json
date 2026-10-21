@@ -1,0 +1,22 @@
+{
+  "id": "untitled_task",
+  "title": "TODO: task title",
+  "domain": "TODO: scientific domain",
+  "task_sources": [
+    {
+      "name": "TODO: construction prototype or dataset that entered this package",
+      "url": "https://example.invalid/replace-this"
+    }
+  ],
+  "metric": {
+    "description": "TODO: name the raw score test will write, and say whether higher or lower is better.",
+    "type": null
+  },
+  "baseline": {
+    "existing_baseline": false,
+    "name": "",
+    "source": "",
+    "score": 1.0,
+    "bottom_line_score": 0.0
+  }
+}

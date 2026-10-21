@@ -1,0 +1,22 @@
+# Public infrastructure example. Set task to your independently supplied package.
+task: ../examples/integer_echo
+output: ../storage/runs
+image: sie-cpu:local
+base_image: python:3.11-slim-bookworm
+agent:
+  type: codex
+  bundle: ../data/agent_bundles/codex/0.147.0-linux-x86_64
+  model: REPLACE_WITH_MODEL
+  reasoning_effort: high
+# Example budget; adjust to the selected task and do not exceed its ceilings.
+resources:
+  cpus: 2
+  memory_mb: 4096
+  timeout_seconds: 14400
+network:
+  mode: proxy
+  # Configure known disallowed sources for your scientific task when needed.
+  denied_domains: []
+  # Set only if your network requires an upstream HTTP proxy.
+  # The controller does not automatically load .env.
+  upstream_proxy: null

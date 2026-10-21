@@ -1,0 +1,32 @@
+{
+  "instructions": "TODO: write the English agent-facing task statement. State the scientific goal, the allowed actions, and how to submit the final files. If the approved design already includes mid-run checks, state those checks; do not add advice about calling or skipping validation.",
+  "input": [
+    {
+      "path": "data.json",
+      "format": "json",
+      "description": "TODO: describe this Agent-visible input file. Add more items, or change the path to a CSV or directory, to match the real data."
+    }
+  ],
+  "submission": [
+    {
+      "path": "submission.json",
+      "format": "json",
+      "description": "TODO: describe the frozen submission file and its required fields.",
+      "has_template": true
+    }
+  ],
+  "environment": [
+    {
+      "name": "TODO",
+      "version": "TODO",
+      "description": "TODO: name extra software already installed for the agent. Delete this array (write []) if the task uses the default image with no added packages."
+    }
+  ],
+  "requirement": [],
+  "limitation": {
+    "cpu": {"cores": 1},
+    "memory": {"gb": 1},
+    "gpu": {"count": 0},
+    "runtime": {"seconds": 3600}
+  }
+}

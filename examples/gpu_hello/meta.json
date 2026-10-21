@@ -1,0 +1,7 @@
+{
+  "id": "gpu_hello",
+  "title": "GPU vector addition infrastructure smoke test",
+  "domain": "infrastructure_testing",
+  "task_sources": [],
+  "metric": {"type": "raw_only", "description": "1 for a correctly formatted vector-add output, otherwise 0. This CPU check does not independently attest CUDA execution; inspect the agent execution trace."}
+}

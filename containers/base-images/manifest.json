@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "built_at": "2026-09-22T05:00:49Z",
+  "images": [
+    {
+      "role": "cpu-base",
+      "tag": "sie-cpu-base:0.1.0",
+      "id": "sha256:6cbe52eeb9b5cb216cd8b6d7cfc9c685a92135989666a3a6d6ef0b110564af02",
+      "parent": "python:3.11-slim-bookworm",
+      "archive": {
+        "file": "data/images/sie-cpu-base-0.1.0-linux-amd64.tar.gz",
+        "sha256": "e9e4c2a5e84012c066baf276a307f65085d571414b5e9d5f97a27c6680d5c334",
+        "bytes": 343354688
+      }
+    },
+    {
+      "role": "gpu-base",
+      "tag": "sie-gpu-base:0.1.0-cu128",
+      "id": "sha256:ff8982a7133bc029c7deef0d2c4ad954ed8b1b1a76a8afdfc57302c2da514a0d",
+      "parent": "pytorch/pytorch:2.8.0-cuda12.8-cudnn9-devel",
+      "parent_id": "sha256:6b99022ca960b0bd57f96f2283f2e8584101b2c72f2723bab6af64d6478e04df",
+      "cuda": "12.8",
+      "pytorch": "2.8.0+cu128",
+      "archive": {
+        "file": "data/images/sie-gpu-base-0.1.0-cu128-linux-amd64.tar.gz",
+        "sha256": "865ce1fd1bd6aceb4c3c1a1735d85ef2a4d76ef4f8b19f05910eb45f7f2d796f",
+        "bytes": 9868304952
+      }
+    }
+  ]
+}

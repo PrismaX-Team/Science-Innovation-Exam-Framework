@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "type"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "type": {"const": "default"}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "type", "containerfile"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "type": {"const": "containerfile"},
+        "containerfile": {"type": "string", "minLength": 1}
+      }
+    }
+  ]
+}

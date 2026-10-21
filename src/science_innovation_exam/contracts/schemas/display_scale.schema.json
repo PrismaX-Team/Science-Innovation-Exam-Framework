@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "benchmark_release_id",
+    "task_id",
+    "task_payload_sha256",
+    "raw_metric",
+    "calibration",
+    "mapping"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "benchmark_release_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "task_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "task_payload_sha256": {"$ref": "#/definitions/digest"},
+    "raw_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "direction"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 256},
+        "direction": {"enum": ["maximize", "minimize"]}
+      }
+    },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregation",
+        "artifact_sha256",
+        "selection_partition_sha256",
+        "confirmation_partition_sha256",
+        "lower_anchor",
+        "reference_anchor"
+      ],
+      "properties": {
+        "aggregation": {"enum": ["mean", "median"]},
+        "artifact_sha256": {"$ref": "#/definitions/digest"},
+        "selection_partition_sha256": {"$ref": "#/definitions/digest"},
+        "confirmation_partition_sha256": {
+          "anyOf": [{"$ref": "#/definitions/digest"}, {"type": "null"}]
+        },
+        "lower_anchor": {
+          "allOf": [
+            {"$ref": "#/definitions/anchor"},
+            {"properties": {"source": {"const": "calibration_worst"}}}
+          ]
+        },
+        "reference_anchor": {
+          "allOf": [
+            {"$ref": "#/definitions/anchor"},
+            {
+              "properties": {
+                "source": {"enum": ["reproducible_baseline", "calibration_best"]}
+              }
+            }
+          ]
+        }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower_score", "reference_score", "precision", "rounding"],
+      "properties": {
+        "lower_score": {"const": "0"},
+        "reference_score": {"const": "1000"},
+        "precision": {"type": "integer", "minimum": 16, "maximum": 1000},
+        "rounding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decimal_places", "mode"],
+          "properties": {
+            "decimal_places": {"type": "integer", "minimum": 0, "maximum": 100},
+            "mode": {"enum": ["half_even", "half_up", "down"]}
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^(sha256:)?[a-fA-F0-9]{64}$"},
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "competitor_id", "raw_value", "evidence_sha256"],
+      "properties": {
+        "source": {"type": "string"},
+        "competitor_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "raw_value": {"$ref": "#/definitions/decimal"},
+        "evidence_sha256": {"$ref": "#/definitions/digest"}
+      }
+    }
+  }
+}

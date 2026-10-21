@@ -1,0 +1,1 @@
+Runtime artifacts are ignored by Git. Each CPU experiment is one directory containing config, logs, task snapshot, private Context, frozen submission and result.json. Store this directory on disk. It contains hidden task data and must not be mounted into a tested Agent.

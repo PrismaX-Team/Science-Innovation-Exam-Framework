@@ -1,0 +1,11 @@
+ARG BASE_IMAGE=python:3.11-slim-bookworm
+FROM ${BASE_IMAGE}
+# RUNTIME_USER is the user the image starts as. Docker overrides it with --user anyway; a
+# container service whose engine cannot set the user (and needs root to drop privileges per
+# command) passes RUNTIME_USER=root through ContainerService.image_build_args().
+ARG RUNTIME_USER=65532:65532
+USER root
+COPY science_innovation_exam /opt/science_innovation_exam/science_innovation_exam
+ENV PYTHONPATH=/opt/science_innovation_exam PYTHONDONTWRITEBYTECODE=1
+RUN printf '#!/bin/sh\nexec python3 -m science_innovation_exam.action_client "$@"\n' > /usr/local/bin/sie-action && chmod 755 /usr/local/bin/sie-action
+USER ${RUNTIME_USER}

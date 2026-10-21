@@ -1,0 +1,20 @@
+[
+  {
+    "content": "Read /instruction.json and the read-only /input. The whole sandbox is your workspace. The framework does not assign a scratch directory."
+  },
+  {
+    "content": "In /instruction.json, input describes the public material under /input. environment lists software already installed. requirement lists this task's hard requirements. limitation states the CPU, memory and wall-time ceilings. Use the numbers in that file."
+  },
+  {
+    "content": "Each submission path is relative and may name a file or directory. When has_template is omitted or true, the file or directory template is at /input/<path>. When has_template is false, there is no template. Hand in the final file or directory at /submission/<path>. A declared directory includes all its contents recursively, including empty directories; symlinks and special files are not allowed."
+  },
+  {
+    "content": "For a mid-run check, write the JSON defined by this task to any file and run sie-action validation --request FILE. The framework passes that JSON as the payload to the checker. It does not read files under /submission for that check."
+  },
+  {
+    "content": "When your submission is in place, run sie-action test with no body. The framework collects only the paths listed in submission, recursively for directories. The score is not returned."
+  },
+  {
+    "content": "If a problem with the experiment setup prevents meaningful progress, such as an unreachable GPU machine, unavailable required input, or a broken execution environment, run sie-action abort --reason \"briefly describe the problem\". Write the reason in your own words; there are no predefined reason categories. Retry transient failures a limited number of times first. Ordinary code errors or disappointing results should be investigated and corrected. Abort ends the experiment without final scoring; the framework records your explanation and cleans up its allocated resources."
+  }
+]

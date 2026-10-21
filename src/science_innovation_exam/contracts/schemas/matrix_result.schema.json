@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "task_payload_sha256",
+    "status",
+    "metric_type",
+    "raw_metric",
+    "matrix_config_sha256",
+    "utility_value",
+    "matrix_score",
+    "error"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "task_id": {"type": "string", "minLength": 1},
+    "task_payload_sha256": {"$ref": "#/definitions/digest"},
+    "status": {"enum": ["scored", "invalid", "raw_only", "unconfigured"]},
+    "metric_type": {
+      "enum": [
+        null,
+        "linear_maximize",
+        "linear_minimize",
+        "log_ratio_maximize",
+        "log_ratio_minimize",
+        "upper_residual_log",
+        "lower_residual_log",
+        "power_maximize",
+        "power_minimize",
+        "monotone_piecewise_maximize",
+        "monotone_piecewise_minimize",
+        "raw_only",
+        "custom"
+      ]
+    },
+    "raw_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "direction", "valid"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "value": {"$ref": "#/definitions/decimal"},
+        "direction": {"enum": ["maximize", "minimize"]},
+        "valid": {"type": "boolean"}
+      }
+    },
+    "matrix_config_sha256": {"$ref": "#/definitions/digest"},
+    "utility_value": {
+      "anyOf": [{"$ref": "#/definitions/decimal"}, {"type": "null"}]
+    },
+    "matrix_score": {
+      "anyOf": [{"$ref": "#/definitions/decimal"}, {"type": "null"}]
+    },
+    "error": {"type": ["string", "null"]}
+  },
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    }
+  }
+}

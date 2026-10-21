@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Unit tests with all fixture data on disk; no Docker or model calls."""
+import os
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(root / "src"), str(root)]
+runtime = sorted((root / "storage/controller-runtime").glob("cpython-%s%s-*/site-packages" % sys.version_info[:2]))
+if runtime:
+    sys.path.insert(1, str(runtime[-1]))
+from science_innovation_exam.common.host import require_disk
+
+require_disk(root / "storage")
+scratch = root / "storage/test-tmp"
+scratch.mkdir(exist_ok=True)
+os.environ["TMPDIR"] = str(scratch)
+tempfile.tempdir = str(scratch)
+suite = unittest.defaultTestLoader.discover(str(root / "tests"), top_level_dir=str(root))
+result = unittest.TextTestRunner(verbosity=2).run(suite)
+raise SystemExit(not result.wasSuccessful())

@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "domain", "task_sources", "metric"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "title": {"type": "string", "minLength": 1},
+    "domain": {"type": "string", "minLength": 1},
+    "task_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "url"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "url": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "type"],
+      "properties": {
+        "description": {"type": "string", "minLength": 1},
+        "type": {
+          "enum": [
+            null,
+            "linear_maximize",
+            "linear_minimize",
+            "log_ratio_maximize",
+            "log_ratio_minimize",
+            "upper_residual_log",
+            "lower_residual_log",
+            "power_maximize",
+            "power_minimize",
+            "monotone_piecewise_maximize",
+            "monotone_piecewise_minimize",
+            "raw_only",
+            "custom"
+          ]
+        },
+        "transform": {"$ref": "#/definitions/matrix_transform"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"enum": [null, "raw_only"]}}},
+          "then": {"not": {"required": ["transform"]}}
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "upper_residual_log",
+                  "lower_residual_log",
+                  "power_maximize",
+                  "power_minimize",
+                  "monotone_piecewise_maximize",
+                  "monotone_piecewise_minimize",
+                  "custom"
+                ]
+              }
+            }
+          },
+          "then": {"required": ["transform"]}
+        }
+      ]
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["existing_baseline", "name", "source", "score", "bottom_line_score"],
+      "properties": {
+        "existing_baseline": {"type": "boolean"},
+        "name": {"type": "string"},
+        "source": {"type": "string"},
+        "score": {"type": "number"},
+        "bottom_line_score": {"type": "number"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"existing_baseline": {"const": true}}},
+          "then": {
+            "properties": {
+              "name": {"minLength": 1},
+              "source": {"minLength": 1}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"existing_baseline": {"const": false}}},
+          "then": {
+            "properties": {
+              "name": {"maxLength": 0},
+              "source": {"maxLength": 0}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    },
+    "matrix_anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_value", "matrix_score"],
+      "properties": {
+        "raw_value": {"$ref": "#/definitions/decimal"},
+        "matrix_score": {"$ref": "#/definitions/decimal"}
+      }
+    },
+    "matrix_transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_direction",
+        "parameters",
+        "anchors",
+        "invalid_score",
+        "precision",
+        "rounding"
+      ],
+      "properties": {
+        "raw_direction": {"enum": ["maximize", "minimize"]},
+        "parameters": {"type": "object"},
+        "anchors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lower", "reference"],
+          "properties": {
+            "lower": {"$ref": "#/definitions/matrix_anchor"},
+            "reference": {"$ref": "#/definitions/matrix_anchor"}
+          }
+        },
+        "invalid_score": {"$ref": "#/definitions/decimal"},
+        "precision": {"type": "integer", "minimum": 16, "maximum": 1000},
+        "rounding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decimal_places", "mode"],
+          "properties": {
+            "decimal_places": {"type": "integer", "minimum": 0, "maximum": 100},
+            "mode": {"enum": ["half_even", "half_up", "down"]}
+          }
+        }
+      }
+    }
+  }
+}

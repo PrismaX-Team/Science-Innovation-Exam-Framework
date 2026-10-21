@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "science-innovation-exam"
+version = "0.2.0"
+description = "Container experiments for independently supplied scientific task packages"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+dependencies = [
+  "jsonschema>=4.23,<5",
+  "PyYAML>=6.0,<7",
+  "referencing>=0.35.1,<0.36",
+]
+
+[project.scripts]
+sie = "science_innovation_exam.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["science_innovation_exam*"]
+
+[tool.setuptools.package-data]
+science_innovation_exam = [
+  "Containerfile",
+  "contracts/schemas/*.json",
+  "prompts/*.json",
+]

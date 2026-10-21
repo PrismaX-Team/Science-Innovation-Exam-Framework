@@ -1,0 +1,10 @@
+{
+  "domain": "testing",
+  "id": "integer_echo",
+  "metric": {
+    "description": "One is correct and zero is incorrect.",
+    "type": null
+  },
+  "task_sources": [],
+  "title": "Integer echo"
+}

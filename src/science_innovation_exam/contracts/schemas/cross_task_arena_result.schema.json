@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "benchmark_release_sha256",
+    "experiment_policy_sha256",
+    "input_sha256",
+    "status",
+    "reference_competitor_id",
+    "weighting",
+    "model",
+    "counts",
+    "ranking",
+    "pairwise",
+    "domains",
+    "diagnostics",
+    "representativeness",
+    "uncertainty",
+    "excluded_pair_weight"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "snapshot_id": {"type": "string", "minLength": 1},
+    "benchmark_release_sha256": {"$ref": "#/definitions/digest"},
+    "experiment_policy_sha256": {"$ref": "#/definitions/digest"},
+    "input_sha256": {"$ref": "#/definitions/digest"},
+    "status": {"enum": ["ranked", "provisional_incomplete"]},
+    "reference_competitor_id": {"type": "string", "minLength": 1},
+    "weighting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domains",
+        "task_families_within_domain",
+        "tasks_within_family",
+        "repetitions_within_task",
+        "pairs_within_repetition"
+      ],
+      "properties": {
+        "domains": {"const": "equal"},
+        "task_families_within_domain": {"const": "equal"},
+        "tasks_within_family": {"const": "equal"},
+        "repetitions_within_task": {"const": "equal"},
+        "pairs_within_repetition": {"const": "equal"}
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "l2_regularization",
+        "max_iterations",
+        "convergence_tolerance",
+        "rank_tolerance",
+        "output_decimal_places"
+      ],
+      "properties": {
+        "type": {"const": "bradley_terry"},
+        "l2_regularization": {"$ref": "#/definitions/decimal"},
+        "max_iterations": {"type": "integer", "minimum": 1},
+        "convergence_tolerance": {"$ref": "#/definitions/decimal"},
+        "rank_tolerance": {"$ref": "#/definitions/decimal"},
+        "output_decimal_places": {"type": "integer", "minimum": 3, "maximum": 15}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["competitors", "domains", "task_families", "tasks", "repetitions", "matches"],
+      "properties": {
+        "competitors": {"type": "integer", "minimum": 2},
+        "domains": {"type": "integer", "minimum": 1},
+        "task_families": {"type": "integer", "minimum": 1},
+        "tasks": {"type": "integer", "minimum": 1},
+        "repetitions": {"type": "integer", "minimum": 1},
+        "matches": {"type": "integer", "minimum": 1}
+      }
+    },
+    "ranking": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/definitions/ranking_entry"}
+    },
+    "pairwise": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "left_competitor_id",
+          "right_competitor_id",
+          "compared_weight",
+          "observed_left_score",
+          "model_left_win_probability",
+          "left_wins",
+          "ties",
+          "left_losses"
+        ],
+        "properties": {
+          "left_competitor_id": {"type": "string", "minLength": 1},
+          "right_competitor_id": {"type": "string", "minLength": 1},
+          "compared_weight": {"$ref": "#/definitions/decimal"},
+          "observed_left_score": {"$ref": "#/definitions/probability"},
+          "model_left_win_probability": {"$ref": "#/definitions/probability"},
+          "left_wins": {"type": "integer", "minimum": 0},
+          "ties": {"type": "integer", "minimum": 0},
+          "left_losses": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["domain", "status", "weighted_log_loss", "ranking"],
+        "properties": {
+          "domain": {"type": "string", "minLength": 1},
+          "status": {"enum": ["ranked", "insufficient_data"]},
+          "weighted_log_loss": {
+            "anyOf": [{"$ref": "#/definitions/decimal"}, {"type": "null"}]
+          },
+          "ranking": {"type": "array", "items": {"$ref": "#/definitions/domain_ranking_entry"}}
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "converged",
+        "iterations",
+        "weighted_log_loss",
+        "weighted_pairwise_probability_error",
+        "leave_one_domain_out"
+      ],
+      "properties": {
+        "converged": {"const": true},
+        "iterations": {"type": "integer", "minimum": 1},
+        "weighted_log_loss": {"$ref": "#/definitions/decimal"},
+        "weighted_pairwise_probability_error": {"$ref": "#/definitions/decimal"},
+        "leave_one_domain_out": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["omitted_domain", "status", "maximum_rank_shift", "ranking"],
+            "properties": {
+              "omitted_domain": {"type": "string", "minLength": 1},
+              "status": {"enum": ["ranked", "not_assessable"]},
+              "maximum_rank_shift": {"type": ["integer", "null"], "minimum": 0},
+              "ranking": {"type": "array", "items": {"$ref": "#/definitions/domain_ranking_entry"}}
+            }
+          }
+        }
+      }
+    },
+    "representativeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks"],
+      "properties": {
+        "status": {"enum": ["passed", "failed"]},
+        "checks": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "passed", "observed", "threshold"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "passed": {"type": "boolean"},
+              "observed": {"type": ["string", "integer", "boolean", "null"]},
+              "threshold": {"type": ["string", "integer", "boolean", "null"]}
+            }
+          }
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "cluster_unit", "confidence_level", "requested_resamples", "successful_resamples", "seed"],
+      "properties": {
+        "method": {"const": "cluster_bootstrap_percentile"},
+        "cluster_unit": {"enum": ["domain", "task_family", "task", "task_repetition"]},
+        "confidence_level": {"$ref": "#/definitions/probability"},
+        "requested_resamples": {"type": "integer", "minimum": 100},
+        "successful_resamples": {"type": "integer", "minimum": 100},
+        "seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "excluded_pair_weight": {"$ref": "#/definitions/decimal"}
+  },
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    },
+    "probability": {
+      "type": "string",
+      "pattern": "^(?:0(?:\\.[0-9]+)?|1(?:\\.0+)?)$"
+    },
+    "interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": {"$ref": "#/definitions/decimal"},
+        "upper": {"$ref": "#/definitions/decimal"}
+      }
+    },
+    "ranking_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rank",
+        "competitor_id",
+        "name",
+        "kind",
+        "bt_strength",
+        "reference_win_probability_percent",
+        "bt_strength_interval",
+        "reference_win_probability_percent_interval",
+        "invalid_observation_rate_percent",
+        "unavailable_observation_rate_percent"
+      ],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1},
+        "competitor_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["agent", "reference_portfolio"]},
+        "bt_strength": {"$ref": "#/definitions/decimal"},
+        "reference_win_probability_percent": {"$ref": "#/definitions/decimal"},
+        "bt_strength_interval": {"$ref": "#/definitions/interval"},
+        "reference_win_probability_percent_interval": {"$ref": "#/definitions/interval"},
+        "invalid_observation_rate_percent": {"$ref": "#/definitions/decimal"},
+        "unavailable_observation_rate_percent": {"$ref": "#/definitions/decimal"}
+      }
+    },
+    "domain_ranking_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rank", "competitor_id", "bt_strength", "reference_win_probability_percent"],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1},
+        "competitor_id": {"type": "string", "minLength": 1},
+        "bt_strength": {"$ref": "#/definitions/decimal"},
+        "reference_win_probability_percent": {"$ref": "#/definitions/decimal"}
+      }
+    }
+  }
+}

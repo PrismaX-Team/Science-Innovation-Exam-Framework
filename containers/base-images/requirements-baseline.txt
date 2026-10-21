@@ -1,0 +1,13 @@
+# Shared scientific baseline for sie-cpu-base and sie-gpu-base.
+# Direct dependencies only. The image build also writes a full pip freeze
+# to /opt/sie/python-packages.lock.
+numpy==2.3.2
+pandas==2.2.3
+scipy==1.17.1
+scikit-learn==1.7.2
+matplotlib==3.10.8
+pillow==12.3.0
+h5py==3.16.0
+PyYAML==6.0.2
+tqdm==4.70.1
+joblib==1.6.0

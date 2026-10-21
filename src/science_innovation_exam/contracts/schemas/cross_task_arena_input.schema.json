@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "benchmark_release_sha256",
+    "experiment_policy_sha256",
+    "reference_competitor_id",
+    "competitors",
+    "tasks",
+    "observations",
+    "weighting",
+    "model",
+    "uncertainty",
+    "representativeness_gate",
+    "require_complete_results"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "benchmark_release_sha256": {"$ref": "#/definitions/digest"},
+    "experiment_policy_sha256": {"$ref": "#/definitions/digest"},
+    "reference_competitor_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "competitors": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "kind", "configuration_sha256"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "name": {"type": "string", "minLength": 1, "maxLength": 512},
+          "kind": {"enum": ["agent", "reference_portfolio"]},
+          "configuration_sha256": {"$ref": "#/definitions/digest"}
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "payload_sha256",
+          "domain",
+          "task_family",
+          "metric",
+          "reference",
+          "repetition_ids"
+        ],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "payload_sha256": {"$ref": "#/definitions/digest"},
+          "domain": {"type": "string", "minLength": 1, "maxLength": 256},
+          "task_family": {"type": "string", "minLength": 1, "maxLength": 256},
+          "metric": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "direction", "tie_tolerance"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1, "maxLength": 256},
+              "direction": {"enum": ["maximize", "minimize"]},
+              "tie_tolerance": {"$ref": "#/definitions/decimal"}
+            }
+          },
+          "reference": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "artifact_sha256"],
+            "properties": {
+              "source": {"enum": ["reproducible_baseline", "calibration_best"]},
+              "artifact_sha256": {"$ref": "#/definitions/digest"}
+            }
+          },
+          "repetition_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "competitor_id",
+          "task_id",
+          "repetition_id",
+          "status",
+          "raw_value",
+          "result_sha256"
+        ],
+        "properties": {
+          "competitor_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "task_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "repetition_id": {"type": "string", "minLength": 1, "maxLength": 256},
+          "status": {
+            "enum": ["valid", "agent_invalid", "infrastructure_failed", "scorer_failed"]
+          },
+          "raw_value": {
+            "anyOf": [{"$ref": "#/definitions/decimal"}, {"type": "null"}]
+          },
+          "result_sha256": {"$ref": "#/definitions/digest"}
+        }
+      }
+    },
+    "weighting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domains",
+        "task_families_within_domain",
+        "tasks_within_family",
+        "repetitions_within_task",
+        "pairs_within_repetition"
+      ],
+      "properties": {
+        "domains": {"const": "equal"},
+        "task_families_within_domain": {"const": "equal"},
+        "tasks_within_family": {"const": "equal"},
+        "repetitions_within_task": {"const": "equal"},
+        "pairs_within_repetition": {"const": "equal"}
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "l2_regularization",
+        "max_iterations",
+        "convergence_tolerance",
+        "rank_tolerance",
+        "output_decimal_places"
+      ],
+      "properties": {
+        "type": {"const": "bradley_terry"},
+        "l2_regularization": {"$ref": "#/definitions/decimal"},
+        "max_iterations": {"type": "integer", "minimum": 1},
+        "convergence_tolerance": {"$ref": "#/definitions/decimal"},
+        "rank_tolerance": {"$ref": "#/definitions/decimal"},
+        "output_decimal_places": {"type": "integer", "minimum": 3, "maximum": 15}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "cluster_unit", "confidence_level", "resamples", "seed"],
+      "properties": {
+        "method": {"const": "cluster_bootstrap_percentile"},
+        "cluster_unit": {"enum": ["domain", "task_family", "task", "task_repetition"]},
+        "confidence_level": {"$ref": "#/definitions/decimal"},
+        "resamples": {"type": "integer", "minimum": 100},
+        "seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "representativeness_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_domains",
+        "minimum_task_families",
+        "minimum_tasks",
+        "maximum_pairwise_probability_error",
+        "maximum_leave_one_domain_out_rank_shift"
+      ],
+      "properties": {
+        "minimum_domains": {"type": "integer", "minimum": 1},
+        "minimum_task_families": {"type": "integer", "minimum": 1},
+        "minimum_tasks": {"type": "integer", "minimum": 1},
+        "maximum_pairwise_probability_error": {"$ref": "#/definitions/decimal"},
+        "maximum_leave_one_domain_out_rank_shift": {"type": "integer", "minimum": 0}
+      }
+    },
+    "require_complete_results": {"type": "boolean"}
+  },
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^(sha256:)?[a-fA-F0-9]{64}$"},
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    }
+  }
+}

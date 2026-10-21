@@ -1,0 +1,46 @@
+# Operator CPU baseline. Experiments still add the small framework layer on top.
+ARG BASE_IMAGE=python:3.11-slim-bookworm
+FROM ${BASE_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    LANG=C.UTF-8
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        git-lfs \
+        gzip \
+        jq \
+        pkg-config \
+        procps \
+        rsync \
+        tar \
+        unzip \
+        wget \
+        xz-utils \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-baseline.txt /opt/sie/requirements-baseline.txt
+COPY selftest.py /opt/sie/selftest.py
+
+RUN python3 -m pip install --no-cache-dir --requirement /opt/sie/requirements-baseline.txt \
+    && python3 /opt/sie/selftest.py \
+    && python3 -m pip freeze | LC_ALL=C sort > /opt/sie/python-packages.lock \
+    && dpkg-query -W -f='${Package}=${Version}\n' | LC_ALL=C sort > /opt/sie/system-packages.lock \
+    && mkdir -p /workspace \
+    && chmod 1777 /tmp
+
+LABEL org.opencontainers.image.title="Science Innovation Exam CPU baseline" \
+      org.opencontainers.image.version="0.1.0" \
+      io.sie.role="cpu-base" \
+      io.sie.python="3.11"
+
+WORKDIR /workspace
+CMD ["python3"]

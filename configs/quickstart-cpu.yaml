@@ -1,0 +1,14 @@
+# Scripted end-to-end self-check: public base image, no model API and no GPU.
+# These are test limits, not minimum scientific resource estimates.
+task: ../examples/integer_echo
+output: ../storage/runs
+image: sie-quickstart:local
+base_image: python:3.11-slim-bookworm
+agent:
+  type: scripted
+  script: ../examples/echo-agent.py
+  command: [python3, /agent.py, --input, /input, --submission, /submission]
+resources: {cpus: 2, memory_mb: 2048, timeout_seconds: 600}
+verifier: {cpus: 1, memory_mb: 512, timeout_seconds: 120}
+network: {mode: offline}
+container_service: {type: docker}

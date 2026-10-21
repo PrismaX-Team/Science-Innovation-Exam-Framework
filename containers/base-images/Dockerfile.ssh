@@ -1,0 +1,7 @@
+# CPU agent with the tools needed to use a remote GPU; no local GPU libraries required.
+ARG BASE_IMAGE=sie-cpu-base:0.1.0
+FROM ${BASE_IMAGE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && (getent passwd 65532 >/dev/null || useradd -u 65532 -M -d /var/lib/sie-home -s /bin/sh sie-agent)

@@ -1,0 +1,12 @@
+{
+  "instructions": "This is an infrastructure smoke test, not a scientific benchmark. On the assigned GPU, add the two vectors in data.json with a real CUDA kernel. A standard-library-only helper cuda_add.py is provided; it uses the NVIDIA driver directly and requires no PyTorch installation. Run the helper on the GPU using --input INPUT/data.json --output OUTPUT/result.json. Inspect the helper if needed. Copy result.json back and submit it as /submission/result.json on the current agent machine, then call sie-action test. Report any GPU or transfer failure; do not fabricate a CUDA result.",
+  "execution": {"gpu_count": 1},
+  "input": [
+    {"path": "data.json", "format": "json", "description": "Two short vectors to add on the GPU."},
+    {"path": "cuda_add.py", "format": "python", "description": "CUDA vector-add helper using only Python standard library and the NVIDIA driver."}
+  ],
+  "submission": [{"path": "result.json", "format": "json", "description": "CUDA result with values, backend and GPU name.", "has_template": false}],
+  "environment": [{"name": "Python", "version": "3", "description": "Standard Python; GPU driver is available on the allocated H machine."}],
+  "requirement": ["Execute an actual CUDA kernel on the assigned GPU and return its output to the current agent machine."],
+  "limitation": {"cpu": {"cores": 16}, "memory": {"gb": 16}, "gpu": {"count": 1}, "runtime": {"seconds": 900}}
+}

@@ -1,0 +1,23 @@
+# Task image. The runner builds this first, then layers the framework SDK on top.
+# SIE_BASE_IMAGE is the operator default (currently a Python 3.11 slim image).
+ARG SIE_BASE_IMAGE
+FROM ${SIE_BASE_IMAGE}
+
+USER root
+
+# System packages. Delete this block if you only need Python wheels.
+# RUN apt-get update \
+#     && apt-get install -y --no-install-recommends \
+#         build-essential \
+#     && rm -rf /var/lib/apt/lists/*
+
+# Python packages. Pin versions. Build may be offline unless the run config
+# sets build.network to default.
+# COPY requirements.txt /tmp/requirements.txt
+# RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+#     && rm /tmp/requirements.txt
+
+# Extra files in this directory (wheels, model weights the agent may use)
+# can be COPY'd here. Do not copy hidden scoring labels.
+
+USER 65532:65532

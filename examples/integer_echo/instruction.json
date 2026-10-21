@@ -1,0 +1,21 @@
+{
+  "environment": [],
+  "input": [
+    {
+      "description": "One public integer.",
+      "format": "json",
+      "path": "value.json"
+    }
+  ],
+  "instructions": "Infrastructure self-check only, not a scientific benchmark. Read /input/value.json and submit the same JSON integer as /submission/submission.json. You may call validation with a JSON object containing value; it returns the call count and values seen. Finish with sie-action test.",
+  "limitation": {},
+  "requirement": [],
+  "submission": [
+    {
+      "description": "The submitted integer.",
+      "format": "json",
+      "has_template": false,
+      "path": "submission.json"
+    }
+  ]
+}

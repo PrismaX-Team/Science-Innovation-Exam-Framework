@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "instructions",
+    "input",
+    "submission",
+    "environment",
+    "requirement",
+    "limitation"
+  ],
+  "properties": {
+    "execution": {
+      "description": "Required hardware, separate from limitation ceilings; omitted means CPU only.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {"gpu_count": {"type": "integer", "minimum": 0}}
+    },
+    "instructions": {"type": "string", "minLength": 1},
+    "input": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/described_path"}
+    },
+    "submission": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "format", "description"],
+        "properties": {
+          "path": {"description": "Normalized relative path to a file or directory; a directory includes its entire tree.", "type": "string", "minLength": 1},
+          "format": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "has_template": {
+            "description": "Defaults to true when omitted. Set false only when a file or directory template is not meaningful.",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "description"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "version": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "requirement": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "limitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {"$ref": "#/definitions/cpu_limit"},
+        "memory": {"$ref": "#/definitions/memory_limit"},
+        "gpu": {"$ref": "#/definitions/gpu_limit"},
+        "runtime": {"$ref": "#/definitions/runtime_limit"}
+      }
+    }
+  },
+  "definitions": {
+    "described_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "format", "description"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "format": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "cpu_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cores"],
+      "properties": {"cores": {"type": "integer", "minimum": 1}}
+    },
+    "memory_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gb"],
+      "properties": {"gb": {"type": "number", "exclusiveMinimum": 0}}
+    },
+    "gpu_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count"],
+      "properties": {"count": {"type": "integer", "minimum": 0}}
+    },
+    "runtime_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seconds"],
+      "properties": {"seconds": {"type": "integer", "minimum": 1}}
+    }
+  }
+}

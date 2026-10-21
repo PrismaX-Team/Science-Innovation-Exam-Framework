@@ -1,0 +1,56 @@
+# Operator GPU baseline. Same scientific pins as the CPU baseline, plus the
+# pinned CUDA/PyTorch image. It does not use the CPU image as its parent:
+# the PyTorch image is a different distribution line.
+ARG BASE_IMAGE=pytorch/pytorch:2.8.0-cuda12.8-cudnn9-devel
+FROM ${BASE_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    LANG=C.UTF-8 \
+    TOKENIZERS_PARALLELISM=false
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        git-lfs \
+        gzip \
+        jq \
+        pkg-config \
+        procps \
+        rsync \
+        tar \
+        unzip \
+        wget \
+        xz-utils \
+        zip \
+    && rm -rf /var/lib/apt/lists/* \
+    && if ! command -v python3 >/dev/null 2>&1; then ln -sf "$(command -v python)" /usr/local/bin/python3; fi
+
+COPY requirements-baseline.txt /opt/sie/requirements-baseline.txt
+COPY selftest.py /opt/sie/selftest.py
+
+# Keep the NumPy that shipped with this PyTorch build.
+RUN python3 -m pip install --no-cache-dir --requirement /opt/sie/requirements-baseline.txt \
+    && python3 -c 'import numpy,torch; assert numpy.__version__=="2.3.2", numpy.__version__; assert torch.__version__=="2.8.0+cu128", torch.__version__' \
+    && python3 /opt/sie/selftest.py --gpu \
+    && python3 -m pip freeze | LC_ALL=C sort > /opt/sie/python-packages.lock \
+    && dpkg-query -W -f='${Package}=${Version}\n' | LC_ALL=C sort > /opt/sie/system-packages.lock \
+    && mkdir -p /workspace \
+    && chmod 1777 /tmp
+
+LABEL org.opencontainers.image.title="Science Innovation Exam GPU baseline" \
+      org.opencontainers.image.version="0.1.0-cu128" \
+      io.sie.role="gpu-base" \
+      io.sie.cuda="12.8" \
+      io.sie.pytorch="2.8.0+cu128" \
+      io.sie.python="3.11"
+
+WORKDIR /workspace
+CMD ["python3"]

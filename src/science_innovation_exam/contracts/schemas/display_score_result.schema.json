@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "benchmark_release_id",
+    "task_id",
+    "task_payload_sha256",
+    "status",
+    "raw_metric",
+    "verifier_result_sha256",
+    "display_scale_sha256",
+    "display_score",
+    "error"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "benchmark_release_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "task_payload_sha256": {"$ref": "#/definitions/digest"},
+    "status": {"enum": ["scored", "invalid"]},
+    "raw_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "direction", "valid"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "value": {"$ref": "#/definitions/decimal"},
+        "direction": {"enum": ["maximize", "minimize"]},
+        "valid": {"type": "boolean"}
+      }
+    },
+    "verifier_result_sha256": {"$ref": "#/definitions/digest"},
+    "display_scale_sha256": {"$ref": "#/definitions/digest"},
+    "display_score": {
+      "anyOf": [{"$ref": "#/definitions/decimal"}, {"type": "null"}]
+    },
+    "error": {"type": ["string", "null"]}
+  },
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+    }
+  }
+}
