@@ -16,6 +16,7 @@ from pathlib import Path
 
 from ..common.host import writable
 from ..common.serialization import atomic_write_bytes
+from ..common.bounded_io import read_bytes
 from .interface import Channel, MountSpec
 
 NAME = re.compile(r"^[A-Za-z0-9._-]{1,128}\.json$")
@@ -46,10 +47,12 @@ class MailboxChannel(Channel):
         """Process at most one request; returns True when one was handled."""
         for name in self.pending():
             path = self.requests / name
-            if path.is_symlink():
-                raw = b"symbolic link"
-            else:
-                raw = path.read_bytes() if path.stat().st_size <= self.maximum else b"x" * (self.maximum + 1)
+            try:
+                raw = read_bytes(path, self.maximum)
+            except ValueError:
+                raw = b"x" * (self.maximum + 1)
+            except OSError:
+                raw = b"unreadable request"
             response = self.handler(raw)
             payload = (json.dumps(response, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n").encode()
             atomic_write_bytes(self.responses / name, payload, mode=0o644)

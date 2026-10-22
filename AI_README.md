@@ -39,6 +39,7 @@ This file is for coding assistants working on this repository. It is not a syste
 | Model activity, operational limits and external supervision | `src/science_innovation_exam/model_activity.py`, `model_monitor_config.py`, `model_monitor.py`, [supervision contract](docs/run-supervision.md) |
 | Sandbox observation, sustained recovery and platform/exit attribution | `src/science_innovation_exam/sandbox_monitor.py`, backend `Handle.observe(timeout_seconds)` |
 | Durable resource intents, live ownership, post-crash cleanup | `src/science_innovation_exam/resources.py`, `recovery.py`, `owned_command.py`, backend `recover_resources()` |
+| Source/runtime identity and bounded output/read/redaction | `src/science_innovation_exam/provenance.py`, `bounded_output.py`, `common/bounded_io.py`, [recording limits](docs/runtime-evidence.md) |
 | Task author contract | `contributor/build-sie-task-package/task-contract.md` and `contracts/schemas/` |
 
 Paths in the last column are relative to this repository; abbreviated source paths remain under `src/science_innovation_exam/`.
@@ -55,6 +56,7 @@ Paths in the last column are relative to this repository; abbreviated source pat
 - Cleanup targets only resources owned by this run. Confirm absence before calling deletion successful. Do not discard a remote-only output copy after transfer failure.
 - Persist resource intent before creation and the immutable provider ID when known. Reconcile lost acknowledgements by exact ownership/request metadata. Unknown absent creates remain pending; never infer safety from names alone. Hold RunLock for the whole controller/reclaimer lifetime, do not steal live locks, and preserve result history during cleanup. Linux parent-death guards prevent registered remote-storage writers from surviving the controller; verify stopped writers before purging storage.
 - Final result persistence must survive diagnostic failures. Log processing skips links and special files. Resource cleanup failures remain infrastructure failures.
+- Preserve source identity and unknown states in provenance.json. Runtime evidence is diagnostic, not tamper proof; never dump env/remotes/diffs. Clip logs while draining both pipes; reject oversized control/score responses without unbounded reads. No global disk quota is implied.
 - Local Docker GPU access is explicit and agent-only. A GPU limit alone is not a request. The verifier currently receives no GPU. Remote GPU allocation belongs to external backends.
 - All task and hardware policy, resource quantities, network settings, model selection and paths belong in contracts/configuration, not new site-specific constants in the main framework.
 

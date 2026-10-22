@@ -65,6 +65,8 @@ science_innovation_exam/
 | `config.py` | 一份 YAML；密钥字段名直接拒绝；路径相对配置文件解析 |
 | `task.py` | 五段合同：恰好五个顶层项、schema、输入声明、提交模板、只读快照、冻结提交 |
 | `runner.py` | 单次实验生命周期；只通过 `container_service.interface` 接触容器，调用顺序固定为 check → publish → open_channel → start_agent → run_verifier* → stop → run_verifier(test) → close → cleanup |
+| `provenance.py` | 主框架/后端/任务版本与修改状态、控制器及容器的有限环境记录；不收集凭据 |
+| `bounded_output.py`、`common/bounded_io.py` | 有界进程捕获、文件读取、分块日志脱敏；见[运行记录与输出上限](runtime-evidence.md) |
 | `images.py` | 在开发机用本地 Docker 构建本次镜像（基础镜像 + 可选任务层 + 框架接口层），返回镜像 ID 与本地标签 |
 | `container_service/interface.py` | 容器服务接口：`MountSpec`（运行目录相对路径，或带 `shared` 的共用内容）、`ContainerSpec`、`Handle`、`Channel` |
 | `container_service/docker.py` | 默认实现：`docker run` 只读根、丢权限、CPU/内存/PID、有上限的日志、显式删除；含出口代理（原 `network.py`） |

@@ -25,6 +25,7 @@ DEFAULTS = {
     "container_service": {"type": "docker"},
     "model_monitor": MONITOR_DEFAULTS,
     "sandbox_monitor": SANDBOX_DEFAULTS,
+    "provenance": {"timeout_seconds": 5, "maximum_bytes": 1048576},
 }
 
 DOCKER_SERVICE_FIELDS = {"type", "action_transport", "poll_seconds", "creation_timeout_seconds"}
@@ -110,6 +111,13 @@ def load_config(path):
     check_container_service(config["container_service"])
     check_model_monitor(config["model_monitor"])
     check_sandbox_monitor(config["sandbox_monitor"])
+    if set(config['provenance']) != set(DEFAULTS['provenance']):
+        raise ContractError('unknown provenance fields')
+    for key, number in config['provenance'].items():
+        if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number) or number <= 0:
+            raise ContractError('provenance.%s must be positive' % key)
+    if type(config['provenance']['maximum_bytes']) is not int:
+        raise ContractError('provenance.maximum_bytes must be an integer')
     if "module_path" in config["container_service"]:
         directory = (path.parent / config["container_service"]["module_path"]).resolve()
         if not directory.is_dir():

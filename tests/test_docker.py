@@ -13,6 +13,8 @@ from unittest.mock import patch
 
 from science_innovation_exam.config import load_config
 from science_innovation_exam.common.errors import InfrastructureError
+from science_innovation_exam.common.host import writable
+from science_innovation_exam.bounded_output import command as logged_command
 from science_innovation_exam.agents import prepare_agent
 from science_innovation_exam.container_service.docker import Docker, DockerService
 from science_innovation_exam.runner import run
@@ -143,6 +145,13 @@ else:
         metrics = {item["name"]: item["value"] for item in result["score"]["metrics"]}
         self.assertEqual(metrics["validation_count"], 1)
         self.assertTrue((root / "submission/submission.json").is_file())
+        evidence = json.loads((root / 'provenance.json').read_text())
+        self.assertEqual(evidence['framework']['commit'], evidence['backend']['commit'])
+        self.assertIsNotNone(evidence['framework']['commit'])
+        for runtime in (root / 'agent-state/runtime.json', root / 'test/output/runtime.json'):
+            observed = json.loads(runtime.read_text())
+            self.assertIn('python', observed)
+            self.assertIn('cgroup', observed)
         self.assertNotIn("private_score", (root / "agent-logs/stdout.log").read_text())
         context = VerifyContext(root / "context")
         self.assertEqual(context["validation_count"], 1)
@@ -157,6 +166,25 @@ else:
             verifier = Verifier(service, task, result["image"], copied.root, config, root)
             scores.append(verifier.invoke("test", root / ("repeat-%d" % ordinal), submission=root / "submission"))
         self.assertEqual(scores[0], scores[1])
+
+    def test_remote_style_capture_in_real_image_clips_without_changing_exit_code(self):
+        result, root = self.fixture('remote-capture')
+        self.assertEqual(result['status'], 'scored', result)
+        logs = root / 'remote-capture'
+        logs.mkdir()
+        writable(logs)
+        command = logged_command(['python3', '-c',
+                                  'import os; [(os.write(1,b"x"*65536),os.write(2,b"y"*65536)) for _ in range(32)]; exit(7)'],
+                                 '/sie-logs', 1000)
+        config = json.loads((root / 'config.json').read_text())
+        code = self.docker.run('sie-' + root.name + '-capture', result['image'], command,
+                               [(logs, '/sie-logs', False)], config['verifier'], root / 'capture-transport', 1000)
+        self.assertEqual(code, 7)
+        self.assertEqual((logs / 'stdout.log').read_bytes(), b'x' * 1000)
+        self.assertEqual((logs / 'stderr.log').read_bytes(), b'y' * 1000)
+        capture = json.loads((logs / 'capture.json').read_text())
+        self.assertTrue(capture['stdout_truncated'])
+        self.assertTrue(capture['stderr_truncated'])
 
     def test_mailbox_transport_over_docker_matches_socket(self):
         """Invariant B at a real container boundary: /control is the run directory's control/."""

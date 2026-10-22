@@ -13,6 +13,33 @@ repository with member/AI setup guidance. No runtime behavior changes in publica
 The framework and optional site adapters are independent Git repositories.
 Adapters are loaded through YAML; no relative checkout location is required.
 
+## 2026-10-22 output bounds and execution provenance
+
+Ordinary log redaction uses bounded blocks and atomic replacement, including
+secrets across block/truncation boundaries. Mailbox requests and score JSON use
+bounded regular-file reads rather than stat-then-read. A stdlib-only image helper
+drains both subprocess pipes while limiting each saved log; control responses
+instead fail on overflow. The private D adapter uses it for Agent/verifier logs
+and rclone responses, with explicit HTTP admission-rejection handling.
+
+Each run saves framework/backend/task Git identities and dirty/unknown states,
+the task fingerprint and configured resources separately from controller facts.
+An exec prelude records finite container environment evidence without dumping
+env, Git remotes or source differences. Ignored task copies do not inherit the
+parent checkout's commit. Runtime records remain diagnostic, not tamper proof;
+there is no new global disk quota or scientific scoring change. Configuration
+and limits: [runtime evidence](runtime-evidence.md).
+
+Validation: framework unit suite 126 tests, 112 passed / 14 real-Docker skipped;
+adapter 77 tests, 68 passed / 9 live skipped. Six real Docker methods passed
+(109.900 s), covering complete scoring/runtime records, remote-style stdout and
+stderr floods with retained exit 7, the local Codex model stub, both abort
+transports, SIGKILL/new-process recovery and container absence. A final normal
+Docker flow was rerun after the final environment/source-record changes. Logs:
+`storage/reliability-20261022-unit.log`, `reliability-20261022-docker.log`, and
+`reliability-20261022-final-docker.log`. No real D/H allocation or paid model was
+used. The new D logging/metadata path still needs live site acceptance.
+
 The 2026-10-12 framework snapshot captures the existing working implementation
 before remote GPU development. Its compatible adapter snapshot is
 `a5e1d39b3dca19a14c0e61e55fdf832379f1b0c8`.

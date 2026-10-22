@@ -300,7 +300,8 @@ class RuntimeTests(unittest.TestCase):
                 def run_verifier(self, spec):
                     context["round"] = 2
                     return 1
-            config = {"verifier": {}, "limits": {"log_bytes": 10000, "response_bytes": 10000}}
+            config = {"verifier": {}, "limits": {"log_bytes": 10000, "response_bytes": 10000},
+                      "provenance": {"timeout_seconds": 5, "maximum_bytes": 1048576}}
             verifier = Verifier(FailingService(), task, "test", context.root, config, root)
             with patch("science_innovation_exam.verifier.writable"), self.assertRaises(ScoringError):
                 verifier.invoke("validation", root / "validation", request={})

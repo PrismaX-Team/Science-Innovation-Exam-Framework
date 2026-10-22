@@ -174,6 +174,8 @@ Codex 默认启用[模型请求监督](docs/run-supervision.md)：首响应、�
 | 路径 | 内容 |
 |---|---|
 | `config.json`、`task-package.json` | 实际配置、任务标识和文件指纹 |
+| `provenance.json` | 主框架/后端/任务提交号、修改状态与控制器环境 |
+| `agent-state/runtime.json`、各次评分 `output/runtime.json` | 容器启动时观察到的 Python、资源限制与可查询的 GPU 信息 |
 | `result.json` | 最终状态、评分、耗时及错误信息 |
 | `resources.json` / `controller.json` | 持久资源归属、创建意图及控制器管理记录，不挂给 Agent |
 | `cleanup-result.json` | 补做回收的当前结果；原实验结果通过 `recovery_cleanup` 引用 |
@@ -185,6 +187,8 @@ Codex 默认启用[模型请求监督](docs/run-supervision.md)：首响应、�
 | `test/`、`context-before-test.json`、`context-final.json` | 最终评分和状态快照 |
 
 `preparation_seconds` 与 `agent_seconds` 分别记录准备和 Agent 执行耗时；实验预算从 Agent 启动后开始，`wall_seconds` 包含整个流程。`diagnostic_errors` 表示日志/元数据处理问题，结果仍会保存；`cleanup_errors` 表示资源回收失败，状态为 `infrastructure_failed`、`cleanup_status: pending`。模型故障另见 `failure_phase` / `failure_reason`，无分数。
+
+版本/环境查询由 `provenance` 配置限制时限和读量；查不到时明确保留未知。标准输出、标准错误各按 `limits.log_bytes` 保留前缀，超限后继续排空；评分与动作请求在读取时执行上限。范围及配置见[运行记录与输出上限](docs/runtime-evidence.md)。
 
 | 状态 | 含义 |
 |---|---|

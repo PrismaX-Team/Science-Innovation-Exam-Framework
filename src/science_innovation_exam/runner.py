@@ -5,7 +5,6 @@ Call order per run: check → publish → open_channel → start_agent → run_v
 → Handle.stop → run_verifier(test) → Channel.close → cleanup.
 """
 import json
-import os
 import stat
 import subprocess
 import time
@@ -18,6 +17,7 @@ from . import container_service, images
 from .actions import Actions
 from .agents import prepare_agent
 from .common.errors import ContractError, InfrastructureError
+from .common.bounded_io import redact_file
 from .common.host import require_disk, writable
 from .common.serialization import atomic_write_json
 from .config import load_config
@@ -25,30 +25,20 @@ from .container_service.interface import ContainerSpec, MountSpec
 from .model_monitor import ModelFault, ModelMonitor
 from .sandbox_monitor import SandboxFault, SandboxMonitor
 from .resources import ResourceJournal, RunLock
+from . import provenance
 from .task import TaskPackage
 from .verifier import Verifier
 from .verify_context import VerifyContext
 
 
-def redact_logs(root, secrets):
+def redact_logs(root, secrets, maximum_bytes=16_000_000):
     """Diagnostic files are untrusted; never follow links or block on special files."""
     errors = []
-    if not secrets:
-        return errors
     for path in root.rglob("*.log"):
         try:
             if not stat.S_ISREG(path.lstat().st_mode):
                 raise OSError("log is not a regular file")
-            descriptor = os.open(str(path), os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK)
-            with os.fdopen(descriptor, "r+b") as handle:
-                if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
-                    raise OSError("log is not a regular file")
-                data = handle.read()
-                for secret in secrets:
-                    data = data.replace(secret.encode(), b"[REDACTED]")
-                handle.seek(0)
-                handle.write(data)
-                handle.truncate()
+            redact_file(path, secrets, maximum_bytes)
         except Exception as error:
             errors.append("%s: %s" % (path.relative_to(root), error))
     return errors
@@ -87,11 +77,25 @@ def _run(config, task, root, load_service, prepare_image):
     sandbox_monitor = None
     stopped = False
     secrets = []
+    diagnostic_errors = []
     fingerprint = task.fingerprint()
     started = time.monotonic()
     agent_started = agent_ended = None
     try:
+        evidence = None
+        try:
+            evidence = provenance.collect(config, task)
+            atomic_write_json(root / 'provenance.json', evidence)
+            result['provenance'] = 'provenance.json'
+        except Exception as error:
+            diagnostic_errors.append('provenance: ' + type(error).__name__)
         service = load_service(config, root)
+        if evidence is not None:
+            try:
+                evidence['backend'] = provenance.backend_record(service, config['provenance'])
+                atomic_write_json(root / 'provenance.json', evidence)
+            except Exception as error:
+                diagnostic_errors.append('backend provenance: ' + type(error).__name__)
         service.check()
         atomic_write_json(root / "task-package.json", {
             "task_id": task.task_id, "fingerprint": fingerprint, "source": str(task.root)})
@@ -115,7 +119,8 @@ def _run(config, task, root, load_service, prepare_image):
         writable(root / "agent-state")
         mounts = list(launch.mounts) + task.agent_mounts() + [
             MountSpec("submission", "/submission", False)] + list(channel.mounts)
-        spec = ContainerSpec(role="agent", image=image.uri, command=launch.command, mounts=mounts,
+        command = provenance.command(launch.command, '/state/runtime.json', config['provenance'])
+        spec = ContainerSpec(role="agent", image=image.uri, command=command, mounts=mounts,
                              resources=config["resources"], environment=launch.environment,
                              network_mode=config["network"]["mode"], workdir="/tmp",
                              logs="agent-logs", log_bytes=config["limits"]["log_bytes"],
@@ -236,7 +241,6 @@ def _run(config, task, root, load_service, prepare_image):
         if actions is not None and actions.abort_reason is not None:
             result["abort_reason"] = actions.abort_reason
         result["wall_seconds"] = round(time.monotonic() - started, 3)
-        diagnostic_errors = []
         if service is not None:
             try:
                 metadata = service.run_metadata()
@@ -246,7 +250,7 @@ def _run(config, task, root, load_service, prepare_image):
                 diagnostic_errors.append("backend metadata: %s" % error)
         # Model credentials are never part of config; redact accidental log echoes.
         try:
-            diagnostic_errors.extend(redact_logs(root, secrets))
+            diagnostic_errors.extend(redact_logs(root, secrets, config['limits']['log_bytes']))
         except Exception as error:
             diagnostic_errors.append("log processing: %s" % error)
         if diagnostic_errors:

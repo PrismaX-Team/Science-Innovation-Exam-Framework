@@ -4,10 +4,12 @@ import math
 
 from .common.errors import InfrastructureError, ScoringError
 from .common.host import writable
+from .common.bounded_io import read_bytes
 from .common.serialization import atomic_write_json
 from .container_service.interface import ContainerSpec, MountSpec
 from .contracts.validation import validate_schema
 from .verify_context import VerifyContext
+from .provenance import command as observed_command
 
 
 class Verifier:
@@ -39,6 +41,7 @@ class Verifier:
         else:
             mounts.append(MountSpec(self.relative(submission), "/submission", True))
             command += ["--submission", "/submission", "--result", "/output/result.json"]
+        command = observed_command(command, '/output/runtime.json', self.config['provenance'])
         before = VerifyContext(self.context).snapshot()
         try:
             spec = ContainerSpec(role=kind, image=self.image, command=command, mounts=mounts,
@@ -52,9 +55,11 @@ class Verifier:
             if code:
                 raise ScoringError("%s exited with code %s; see %s" % (kind, code, directory / "logs"))
             result_path = output / filename
-            if result_path.is_symlink() or not result_path.is_file() or result_path.stat().st_size > self.config["limits"]["response_bytes"]:
-                raise ScoringError("missing or oversized %s output" % kind)
-            value = json.loads(result_path.read_text())
+            try:
+                data = read_bytes(result_path, self.config["limits"]["response_bytes"])
+            except (OSError, ValueError) as error:
+                raise ScoringError("missing, unsafe or oversized %s output" % kind) from error
+            value = json.loads(data)
             if not isinstance(value, dict):
                 raise ScoringError("%s output must be an object" % kind)
             if kind == "test":
